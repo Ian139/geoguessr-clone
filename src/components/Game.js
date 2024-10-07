@@ -23,8 +23,11 @@ function Game() {
 	const [correctLocationName, setCorrectLocationName] = useState("");
 	const [guessCount, setGuessCount] = useState(0); // Added for skip feature
 	const [MAX_GUESSES, setMAX_GUESSES] = useState(10); // Added for skip feature
+	const [showTitle, setShowTitle] = useState(true);
 
 	useEffect(() => {
+		// Show alert when the game starts
+		alert("Some locations may not load. Use 'Skip' if nothing is showing up.");
 		console.log("API Key:", process.env.REACT_APP_GOOGLE_MAPS_API_KEY);
 		// Load Google Maps JavaScript API
 		const loadGoogleMapsApi = () => {
@@ -212,6 +215,7 @@ function Game() {
 
 	return (
 		<div className="game">
+			{/* {showTitle && <h1 className="game-title">Geoguessr Clone</h1>} */}
 			{loading && <p className="loading">Loading... Please wait.</p>}
 			{error && <p className="error">{error}</p>}
 			{image && (
