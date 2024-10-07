@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from "react";
+import "./Game.css"; // Make sure to create this CSS file
 
 // List of major US cities with good Street View coverage
 const majorCities = [
@@ -19,7 +20,9 @@ function Game() {
 	const [guess, setGuess] = useState("");
 	const [googleMapsLoaded, setGoogleMapsLoaded] = useState(false);
 	const [lastGuessResult, setLastGuessResult] = useState(null);
-	const [correctLocationName, setCorrectLocationName] = useState('');
+	const [correctLocationName, setCorrectLocationName] = useState("");
+	const [guessCount, setGuessCount] = useState(0); // Added for skip feature
+	const [MAX_GUESSES, setMAX_GUESSES] = useState(10); // Added for skip feature
 
 	useEffect(() => {
 		console.log("API Key:", process.env.REACT_APP_GOOGLE_MAPS_API_KEY);
@@ -57,7 +60,7 @@ function Game() {
 		setLoading(true);
 		setError(null);
 
-		const maxAttempts = 20; // Increased number of attempts
+		const maxAttempts = 5; // Increased number of attempts
 		let attempts = 0;
 
 		while (attempts < maxAttempts) {
@@ -100,17 +103,20 @@ function Game() {
 						setLoading(false);
 						setCurrentLocation({ lat: parseFloat(lat), lng: parseFloat(lng) });
 						const geocoder = new window.google.maps.Geocoder();
-						geocoder.geocode({ location: { lat: parseFloat(lat), lng: parseFloat(lng) } }, (results, status) => {
-							if (status === 'OK') {
-								if (results[0]) {
-									setCorrectLocationName(results[0].formatted_address);
+						geocoder.geocode(
+							{ location: { lat: parseFloat(lat), lng: parseFloat(lng) } },
+							(results, status) => {
+								if (status === "OK") {
+									if (results[0]) {
+										setCorrectLocationName(results[0].formatted_address);
+									} else {
+										setCorrectLocationName("Unknown location");
+									}
 								} else {
-									setCorrectLocationName('Unknown location');
+									setCorrectLocationName("Unknown location");
 								}
-							} else {
-								setCorrectLocationName('Unknown location');
 							}
-						});
+						);
 						return; // Successfully found an image, exit the function
 					}
 				}
@@ -164,7 +170,7 @@ function Game() {
 					setLastGuessResult({
 						distance: distance.toFixed(2),
 						points: points,
-						correctLocation: correctLocationName
+						correctLocation: correctLocationName,
 					});
 					fetchRandomLocation(); // Fetch a new location after guessing
 					setGuess(""); // Clear the input field
@@ -175,6 +181,11 @@ function Game() {
 				}
 			}
 		);
+	};
+
+	const handleSkip = () => {
+		setGuessCount(0); // Reset guess count
+		fetchRandomLocation(); // Fetch a new location
 	};
 
 	const calculateDistance = (loc1, loc2) => {
@@ -201,22 +212,38 @@ function Game() {
 
 	return (
 		<div className="game">
-			{loading && <p>Loading...</p>}
+			{loading && <p className="loading">Loading... Please wait.</p>}
 			{error && <p className="error">{error}</p>}
 			{image && (
 				<img src={image} alt="Street View" className="street-view-image" />
 			)}
-			<input
-				type="text"
-				value={guess}
-				onChange={(e) => setGuess(e.target.value)}
-				placeholder="Enter town name"
-			/>
-			<button onClick={handleGuess}>Submit Guess</button>
-			<p>Score: {score}</p>
+			<div className="game-controls">
+				<input
+					type="text"
+					value={guess}
+					onChange={(e) => setGuess(e.target.value)}
+					placeholder="Enter your guess"
+					className="guess-input"
+				/>
+				<button onClick={handleGuess} className="submit-button">
+					Submit Guess
+				</button>
+				<button onClick={handleSkip} className="skip-button">
+					Skip Location
+				</button>
+			</div>
+			<div className="game-info">
+				<p>
+					Guess {guessCount + 1}/{MAX_GUESSES}
+				</p>
+				<p>Score: {score}</p>
+			</div>
 			{lastGuessResult && (
 				<div className="last-guess-result">
-					<p>Your last guess was {lastGuessResult.distance} km away from the correct location of {lastGuessResult.correctLocation}.</p>
+					<p>
+						Your last guess was {lastGuessResult.distance} km away from{" "}
+						{lastGuessResult.correctLocation}.
+					</p>
 					<p>You earned {lastGuessResult.points} points!</p>
 				</div>
 			)}
